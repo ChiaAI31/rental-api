@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -23,12 +24,16 @@ tag_score = {
     "Near MRT": 180
 }
 
+@app.route('/')
+def health():
+    return '✅ Backend is running on Railway.'
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.json
 
-        # Get scores from selections
+        # Calculate base and additional scores
         base_price = 2100
         total = base_price
         total += furnishing_score.get(data.get("furnishing"), 0)
@@ -36,7 +41,7 @@ def predict():
         total += tag_score.get(data.get("boostTags"), 0)
 
         if data.get("rentFasterBoost"):
-            total -= 80  # minor discount to attract faster rentals
+            total -= 80  # small discount
 
         return jsonify({ "predictedPrice": round(total, 2) })
     
@@ -44,5 +49,5 @@ def predict():
         return jsonify({ "error": str(e) }), 400
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
